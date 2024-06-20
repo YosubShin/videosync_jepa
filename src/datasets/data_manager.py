@@ -88,4 +88,22 @@ def init_data(
             drop_last=drop_last,
             log_dir=log_dir)
 
+    elif data.lower() == 'ntu':
+        from src.datasets.image_dataset import make_custom_imagedataset
+        dataset, data_loader, dist_sampler = make_custom_imagedataset(
+            transform=transform,
+            batch_size=batch_size,
+            collator=collator,
+            pin_mem=pin_mem,
+            num_workers=num_workers,
+            world_size=world_size,
+            rank=rank,
+            root_path=root_path,
+            image_folder=image_folder,
+            training=training,
+            copy_data=copy_data,
+            drop_last=drop_last,
+            persistent_workers=persistent_workers,
+            subset_file=subset_file)
+
     return (data_loader, dist_sampler)

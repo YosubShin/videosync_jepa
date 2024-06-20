@@ -18,8 +18,16 @@ from src.utils.tensors import trunc_normal_
 from src.masks.utils import apply_masks
 
 
+import logging
+
+logging.basicConfig()
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+
 class VisionTransformer(nn.Module):
     """ Vision Transformer """
+
     def __init__(
         self,
         img_size=224,
@@ -85,6 +93,8 @@ class VisionTransformer(nn.Module):
             torch.zeros(1, self.num_patches, embed_dim),
             requires_grad=False)
 
+        logger.info(f'embed_dim: {embed_dim}, num_patches: {self.num_patches}, num_heads: {num_heads}, num_frames: {num_frames}, tubelet_size: {tubelet_size}, grid_size: {grid_size}, grid_depth: {grid_depth}, img_size: {img_size}, patch_size: {patch_size}')
+
         # Attention Blocks
         self.blocks = nn.ModuleList([
             Block(
@@ -122,7 +132,8 @@ class VisionTransformer(nn.Module):
                 uniform_power=self.uniform_power
             )
         else:
-            sincos = get_2d_sincos_pos_embed(embed_dim, grid_size, cls_token=False)
+            sincos = get_2d_sincos_pos_embed(
+                embed_dim, grid_size, cls_token=False)
         pos_embed.copy_(torch.from_numpy(sincos).float().unsqueeze(0))
 
     def _init_weights(self, m):
@@ -221,7 +232,8 @@ class VisionTransformer(nn.Module):
             scale_factor = (T/N_t, H/N_h, W/N_w)
 
             pos_embed = nn.functional.interpolate(
-                pos_embed.reshape(1, N_t, N_h, N_w, dim).permute(0, 4, 1, 2, 3),
+                pos_embed.reshape(1, N_t, N_h, N_w, dim).permute(
+                    0, 4, 1, 2, 3),
                 scale_factor=scale_factor,
                 mode='trilinear')
             pos_embed = pos_embed.permute(0, 2, 3, 4, 1).view(1, -1, dim)
@@ -239,7 +251,8 @@ class VisionTransformer(nn.Module):
             scale_factor = math.sqrt(npatch / N)
 
             pos_embed = nn.functional.interpolate(
-                pos_embed.reshape(1, int(math.sqrt(N)), int(math.sqrt(N)), dim).permute(0, 3, 1, 2),
+                pos_embed.reshape(1, int(math.sqrt(N)), int(
+                    math.sqrt(N)), dim).permute(0, 3, 1, 2),
                 scale_factor=scale_factor,
                 mode='bicubic')
             pos_embed = pos_embed.permute(0, 2, 3, 1).view(1, -1, dim)
